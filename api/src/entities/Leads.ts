@@ -55,9 +55,8 @@ responsibleuserid: number
 
 @Column({nullable: true})
 createdAt: number
-/*
-@ManyToMany(() => Contacts, (contact: Contacts) => contact.externalId)
-@JoinTable()
-public contactsId: Contacts[]*/
+  
+@Column({nullable: true})
+contactId: number
 }
 
