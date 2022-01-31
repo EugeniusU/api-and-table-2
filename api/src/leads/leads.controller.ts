@@ -78,4 +78,22 @@ export class LeadsController {
     auth2() {
         return this.leadsService.auth2()
     }
+
+    @Get('with-contacts')
+    async getLeadsWithContacts() {
+        return await this.leadsService.getLeadsWithContacts()
+    }
+
+    @Get('with-contacts2')
+    async getLeadsWithContacts2() {
+        return await this.leadsService.formatForLeads()
+    }
+
+    @Get('update2')
+    async update2() {
+        let leads = await this.leadsService.formatForLeads()
+        leads.forEach(lead => {
+            this.leadsService.updateLead(lead, lead);
+        })
+    }
 }

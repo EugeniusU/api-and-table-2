@@ -7,15 +7,10 @@ import { Leads } from 'src/entities/Leads';
 import { createQueryBuilder, getRepository, InsertResult, Repository, UpdateResult } from 'typeorm';
 
 const fs = require('fs');
-///const file = fs.readFileSync('../tokens2.json', 'utf8');
-
-///const accessToken = JSON.parse(file)['access_token'];
 
 @Injectable()
 export class ContactsService {
     constructor(@InjectRepository(Contacts) private readonly contactsRepository: Repository<Contacts>, private httpService: HttpService) {}
-
-///    headers = {'Content-Type': 'application/json','Authorization': `Bearer ${accessToken}`}
 
     readToken() {
         const file = fs.readFileSync('../tokens.json', 'utf8');
@@ -100,4 +95,6 @@ export class ContactsService {
             .getMany()
             return leads;
     }
+
+    
 }

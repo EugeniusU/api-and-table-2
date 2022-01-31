@@ -11,33 +11,23 @@ import { appendFile } from 'fs';
 import { AppService } from 'src/app.service';
 
 const fs = require('fs');
-//const file = fs.readFileSync('../tokens2.json', 'utf8');
-//const accessToken = JSON.parse(file)['access_token'];
 
 @Injectable()
 export class LeadsService {
-    constructor(@InjectRepository(Leads) private readonly leadsRepository: Repository<Leads>, private httpService: HttpService) {}
+    constructor(@InjectRepository(Leads) private readonly leadsRepository: Repository<Leads>, private httpService: HttpService) { }
 
     readToken() {
- ///       const file = fs.readFileSync('../../../tokens.json', 'utf8');
- ///       const file = fs.readFileSync('../../tokens.json', 'utf8');
- ///       console.log(await fs.promises.readdir('../tokens.json', 'utf8'))
         const file = fs.readFileSync('../tokens.json', 'utf8');
-///        console.log('../');
- ///       console.log(__dirname)
         const accessToken = JSON.parse(file)['access_token'];
 
         return accessToken;
     }
 
     headers() {
-///        return this.readToken();
-        let headers = {'Content-Type': 'application/json','Authorization': `Bearer ${this.readToken()}`}
+        let headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.readToken()}` }
         return headers;
     }
 
-///    headers = {'Content-Type': 'application/json','Authorization': `Bearer ${accessToken}`}
-///    headers = {'Content-Type': 'application/json','Authorization': `Bearer ${this.readToken()}`}
     baseUrl = 'https://new1641839342.amocrm.ru/api/v4/'
 
     leads = `${this.baseUrl}leads`;
@@ -62,26 +52,25 @@ export class LeadsService {
     }
 
     async get(url) {
-///        return await lastValueFrom(this.httpService.get(url, {headers: this.headers})
-        console.log(this.headers())
-        return await lastValueFrom(this.httpService.get(url, {headers: this.headers()})
+        ///        console.log(this.headers())
+        return await lastValueFrom(this.httpService.get(url, { headers: this.headers() })
             .pipe(map(res => res.data)))
- ///           .toPromise();          
+        ///           .toPromise();          
     }
 
-    async pipelineID() { 
+    async pipelineID() {
         let res = await this.get(this.baseUrl + 'leads/pipelines');
         let ids = res['_embedded'].pipelines;
 
         return ids;
     }
-    
+
     async leadsID(): Promise<any[]> {
         let leadsArray = await this.get(this.baseUrl + 'leads');
         return leadsArray['_embedded'].leads.map(lead => lead['status_id']);
     }
-    
-    async statusesID () {
+
+    async statusesID() {
         let pipelines = await this.pipelineID();
         let ids = pipelines.map(pipeline => pipeline.id);
 
@@ -97,7 +86,7 @@ export class LeadsService {
         let pipelinesWithLeads = [];
 
         pipelines.forEach(pipeline => {
-            let obj = {name: pipeline.name, id: pipeline.id, leads: []};
+            let obj = { name: pipeline.name, id: pipeline.id, leads: [] };
             pipelinesWithLeads.push(obj);
         })
 
@@ -105,14 +94,14 @@ export class LeadsService {
             statuses.forEach((pipeline, index) => {
                 pipeline.forEach(status => {
 
-                if (lead['status_id'] === status.id && lead['pipeline_id'] === status['pipeline_id']) {
-                    lead['statusName'] = status.name;
-                    lead['statusColor'] = status.color;
-                }
-            })
+                    if (lead['status_id'] === status.id && lead['pipeline_id'] === status['pipeline_id']) {
+                        lead['statusName'] = status.name;
+                        lead['statusColor'] = status.color;
+                    }
+                })
             })
         })
-///        console.log(statuses[0])
+        ///        console.log(statuses[0])
 
         leads.forEach(lead => {
             pipelines.forEach(pipeline => {
@@ -129,7 +118,7 @@ export class LeadsService {
         let res = await this.statusesID();
         let formatted = res.map(lead => {
             return {
-                externalId: lead.id, 
+                externalId: lead.id,
                 name: lead.name,
                 budget: lead.price,
                 responsibleuserid: lead['responsible_user_id'],
@@ -141,7 +130,7 @@ export class LeadsService {
             }
         })
 
-///        console.log(res[0])
+        ///        console.log(res[0])
         return formatted;
     }
 
@@ -150,7 +139,7 @@ export class LeadsService {
     }
 
     async updateLead(previousLead: Leads, newLead: Leads): Promise<UpdateResult> {
-        return this.leadsRepository.update({externalId: previousLead.externalId}, newLead);
+        return this.leadsRepository.update({ externalId: previousLead.externalId }, newLead);
     }
 
     async findAllLeads(): Promise<Leads[]> {
@@ -159,7 +148,7 @@ export class LeadsService {
 
     async getAll() {
         let obj = {};
-    
+
         for await (let key of Object.keys(this.legend)) {
             try {
                 let data = await this.get(this.legend[key]);
@@ -169,50 +158,50 @@ export class LeadsService {
                 console.log(e);
             }
         }
-    
+
         return obj;
     }
 
     parseData(data, key) {
         let array = data['_embedded'][key];
-    
+
         return array;
     }
 
     formatData(obj) {
         let data = [];
-    
+
         for (let i = 0; i < obj.leads.length; i++) {
             let leadObj = obj.leads[i];
             console.log(leadObj)
-    
+
             let userObj = obj.users.filter(user => user.id == leadObj['responsible_user_id'])[0];
             let contactID = leadObj['_embedded']['contacts'][0]['id'];
             let contactObj = obj.contacts.filter(contact => contact.id == contactID)[0];
             let customValues = contactObj['custom_fields_values'];
-    
+
             let phone = '';
             let mail = '';
-    
+
             for (let j = 0; j < customValues.length; j++) {
                 let field = customValues[j];
-    
+
                 if (field['field_code'] == 'PHONE') {
                     phone = field.values[0].value
-                } 
+                }
                 if (field['field_code'] == 'EMAIL') {
                     mail = field.values[0].value;
                 }
             }
-    
-            let contact = {name: contactObj.name, mail, phone};
-            let lead = {title: leadObj.name, price: leadObj.price, contact, user: userObj.name, createdAt: leadObj['created_at']};
-    
+
+            let contact = { name: contactObj.name, mail, phone };
+            let lead = { title: leadObj.name, price: leadObj.price, contact, user: userObj.name, createdAt: leadObj['created_at'] };
+
             data.push(lead);
         }
-    
+
         console.log(data);
-    
+
         return data;
     }
 
@@ -239,9 +228,9 @@ export class LeadsService {
     async auth2() {
         const requestConfig: AxiosRequestConfig = {
             headers: {
-              'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             }
-          };
+        };
 
         const data = {
             'client_id': 'd52f7009-6310-4b6a-9215-e3fe5c00fe45',
@@ -253,24 +242,24 @@ export class LeadsService {
 
         const responseData = await lastValueFrom(
             this.httpService.post('https://new1641839342.amocrm.ru/oauth2/access_token/', data, requestConfig).pipe(
-              map((response) => {
-                return response.data;
-              }),
+                map((response) => {
+                    return response.data;
+                }),
             ),
-          );
-        
+        );
+
         return responseData;
     }
 
     async getAllWithStatuses() {
-        let leads =  await this.formatLeads();
+        let leads = await this.formatLeads();
         let previous = await this.findAllLeads();
 
         leads.forEach(lead => {
             previous.forEach((pre, i) => {
                 if (pre.externalId === lead.externalId) {
                     let keys = Object.keys(lead);
-                    
+
                     for (let i = 0; i < keys.length; i++) {
                         let key = keys[i];
                         let valuePre = pre[key];
@@ -302,6 +291,84 @@ export class LeadsService {
     handleCron() {
         console.log('this interval', 1)
         this.getAllWithStatuses();
+    }
+
+    async getLeadsWithContacts() {
+        return await this.get(this.baseUrl + 'leads?with=contacts')
+    }
+
+    async leadsWithStatuses() {
+        let pipelines = await this.pipelineID();
+        let ids = pipelines.map(pipeline => pipeline.id);
+
+        let leadsAll = await this.getLeadsWithContacts();
+        let leads = leadsAll['_embedded'].leads;
+
+        let paths = ids.map(id => `${this.baseUrl}leads/pipelines/${id}`);
+
+        let statusesAll = await Promise.all(paths.map(path => this.get(`${path}}`)));
+
+        let statuses = statusesAll.map(pipeline => pipeline['_embedded'].statuses);       // statuses
+
+        let pipelinesWithLeads = [];
+
+        pipelines.forEach(pipeline => {
+            let obj = { name: pipeline.name, id: pipeline.id, leads: [] };
+            pipelinesWithLeads.push(obj);
+        })
+
+        leads.forEach(lead => {
+            statuses.forEach((pipeline, index) => {
+                pipeline.forEach(status => {
+
+                    if (lead['status_id'] === status.id && lead['pipeline_id'] === status['pipeline_id']) {
+                        lead['statusName'] = status.name;
+                        lead['statusColor'] = status.color;
+                    }
+                })
+            })
+        })
+
+        leads.forEach(lead => {
+            pipelines.forEach(pipeline => {
+                if (lead['pipeline_id'] === pipeline['id']) {
+                    lead['pipelineName'] = pipeline.name;
+                }
+            })
+        })
+
+        return leads;
+    }
+
+    async formatForLeads() {
+        let res = await this.leadsWithStatuses();
+        let formatted = res.map(lead => {
+            let contacts = lead['_embedded']['contacts'];
+            let contactId = contacts.map(contact => {
+                return { id: contact.id, 'is_main': contact['is_main'] }
+            })
+
+            if (contactId.some(contact => Object.values(contact).includes(true))) {
+                contactId = contactId.filter(contact => contact['is_main'] === true)
+            }
+
+            console.log(contactId)
+
+            return {
+                externalId: lead.id,
+                name: lead.name,
+                budget: lead.price,
+                responsibleuserid: lead['responsible_user_id'],
+                statusid: lead['status_id'],
+                statusname: lead.statusName,
+                statuscolor: lead.statusColor,
+                pipelinename: lead.pipelineName,
+                createdAt: lead['created_at'],
+                contactId: contactId.length ? contactId[0].id : null
+            }
+        })
+
+        return formatted;
     }
 
 }
