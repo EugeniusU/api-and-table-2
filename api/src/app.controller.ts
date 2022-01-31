@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {
-///    this.init()
+    ///    this.init()
   }
 
   init() {
@@ -16,19 +16,18 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('update')
-  updateTable() {
-    return this.appService.updateTable();
+  @Get('test')
+  async test() {
+    return await this.appService.getAll()
   }
 
   @Get('all')
   async allWithLeads() {
-    return await this.appService.allWithLeads();
+    return await this.appService.getAll();
   }
 
   @Get('search/:query')
-    search(@Param('query') query) {
-        return this.appService.query(query.toLowerCase());
-    }
-
+  search(@Param('query') query) {
+    return this.appService.search2(query.toLowerCase());
+  }
 }
