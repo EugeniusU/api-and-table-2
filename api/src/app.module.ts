@@ -5,13 +5,13 @@ import { LeadsModule } from './leads/leads.module';
 import { DatabaseModule } from './database/database.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { HttpModule } from '@nestjs/axios';
-import * as fs from 'fs';
+import { ApiModule } from './api/api.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [LeadsModule, DatabaseModule, ContactsModule, ScheduleModule.forRoot(), HttpModule],
+  imports: [ConfigModule.forRoot({isGlobal: true}), LeadsModule, DatabaseModule, ContactsModule, ScheduleModule.forRoot(), ApiModule],
   controllers: [AppController],
-  providers: [AppService],
-///  exports: [{'refresh_token': fs.readFileSync('../token.json', 'utf8')}]
+  providers: [AppService]
 })
+
 export class AppModule {}

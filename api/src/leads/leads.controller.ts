@@ -1,5 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Controller, Get, Query } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { Leads } from 'src/entities/Leads.entity';
 import { LeadsService } from './leads.service';
 
 @Controller('leads')
@@ -7,76 +8,13 @@ export class LeadsController {
     constructor(private readonly leadsService: LeadsService) {}
 
     @Get('all')
-    findAllLeads() {
-        return this.leadsService.getAllLeads();
+    async getAllLeads(): Promise<Leads[]> {
+        return await this.leadsService.getAllLeads();
     }
 
     @Get('find')
-    getAllLeads() {
-        return this.leadsService.findAllLeads();
-    }
-
-    @Get('statuses')
-
-    getStatuses() {
-        return this.leadsService.statusesID();
-    }
-
-    @Get('pipelines')
-    getPipelines() {
-        return this.leadsService.pipelineID();
-    }
-
-    @Get('ids')
-    getIds() {
-        return this.leadsService.leadsID();
-    }
-
-    @Get('update')
-    async getAllWithStatuses() {
-        let leads =  await this.leadsService.formatLeads();
-        let previous = await this.leadsService.findAllLeads();
-
-        leads.forEach(lead => {
-            previous.forEach((pre, i) => {
-                if (pre.externalId === lead.externalId) {
-                    let keys = Object.keys(lead);
-                    
-                    for (let i = 0; i < keys.length; i++) {
-                        let key = keys[i];
-                        let valuePre = pre[key];
-                        let valueNow = lead[key];
-
-                        if (valueNow !== valuePre) {
-                            this.leadsService.updateLead(pre, lead);
-                            break;
-                        }
-                    }
-                }
-            })
-        })
-
-        let previousIds = previous.map(lead => lead.externalId);
-
-        let uniqs = leads.filter(lead => {
-            if (!previousIds.includes(lead.externalId)) {
-                return lead;
-            }
-        })
-
-        uniqs.forEach(lead => {
-            this.leadsService.createLead(lead)
-        })
-    }
-
-    @Get('search/:query')
-    search(@Param('query') query) {
-        return this.leadsService.search(query.toLowerCase());
-    }
-
-    @Get('auth2')
-    auth2() {
-        return this.leadsService.auth2()
+    async findAllLeads(): Promise<Leads[]> {
+        return await this.leadsService.findAllLeads();
     }
 
     @Get('with-contacts')
@@ -89,11 +27,29 @@ export class LeadsController {
         return await this.leadsService.formatForLeads()
     }
 
-    @Get('update2')
-    async update2() {
-        let leads = await this.leadsService.formatForLeads()
-        leads.forEach(lead => {
-            this.leadsService.updateLead(lead, lead);
-        })
+    @Get('update')
+    async update(): Promise<string> {
+        await this.leadsService.update();
+        return 'updated'
+    }
+
+    @Get('search?')
+    async search(@Query('query') query): Promise<Leads[] | []> {
+        console.log(query);
+
+        const result = await this.leadsService.search(query);
+        return result;
+    }
+
+    @Cron(CronExpression.EVERY_5_MINUTES)
+    async updateFunc(): Promise<void> {
+        await this.leadsService.update()
+        console.log('update leads')
+    }
+
+    @Get('search2?')
+    async searchWithJoin(@Query('query') query) {
+        const result = await this.leadsService.searchWithJoin(query);
+        return result;
     }
 }

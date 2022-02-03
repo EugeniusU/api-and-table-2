@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { LeadsService } from './leads.service';
 import { LeadsController } from './leads.controller';
-import { HttpModule } from '@nestjs/axios';
 import { DatabaseModule } from 'src/database/database.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Leads } from 'src/entities/Leads';
+import { Leads } from 'src/entities/Leads.entity';
+import { ApiModule } from 'src/api/api.module';
 
 @Module({
-  imports: [HttpModule, DatabaseModule, TypeOrmModule.forFeature([Leads])],
+  imports: [DatabaseModule, TypeOrmModule.forFeature([Leads]), ApiModule],
   providers: [LeadsService],
   controllers: [LeadsController]
 })

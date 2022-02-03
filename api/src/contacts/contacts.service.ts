@@ -1,41 +1,18 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { lastValueFrom, map } from 'rxjs';
-import { Contacts } from 'src/entities/Contacts';
-import { Leads } from 'src/entities/Leads';
-import { createQueryBuilder, getRepository, InsertResult, Repository, UpdateResult } from 'typeorm';
-
-const fs = require('fs');
+import { ApiService } from 'src/api/api.service';
+import { Contacts } from 'src/entities/Contacts.entity';
+import { InsertResult, Repository, UpdateResult } from 'typeorm';
 
 @Injectable()
 export class ContactsService {
-    constructor(@InjectRepository(Contacts) private readonly contactsRepository: Repository<Contacts>, private httpService: HttpService) {}
-
-    readToken() {
-        const file = fs.readFileSync('../tokens.json', 'utf8');
-        const accessToken = JSON.parse(file)['access_token'];
-
-        return accessToken;
-    }
-
-    headers() {
-        let headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.readToken()}` }
-        return headers;
-    }
+    constructor(@InjectRepository(Contacts) private readonly contactsRepository: Repository<Contacts>, private apiService: ApiService) {}
 
     baseUrl = 'https://new1641839342.amocrm.ru/api/v4/'
 
-    async get(url) {
-        return await lastValueFrom(this.httpService.get(url, {headers: this.headers()})
-            .pipe(map(res => res.data)))     
-    }
-
     async getAllContacts() {
-        let res = await this.get(this.baseUrl + 'contacts?with=leads');
+        let res = await this.apiService.get(this.baseUrl + 'contacts');
         let data = this.formatContacts(res['_embedded'].contacts);
-
-        console.log(res['_embedded'].contacts[14])
 
         return data;
     }
@@ -46,7 +23,6 @@ export class ContactsService {
 
     formatContacts(contacts) {
         let formatted = contacts.map(contact => {
-            let leadsId = contact['_embedded'].leads.map(lead => lead.id);
             let pre = contact['custom_fields_values'];
 
             if (pre && pre.length) {
@@ -65,12 +41,10 @@ export class ContactsService {
                 pre = { phone: '', email: '' }
             }
 
-
             return {
                 externalId: contact.id,
                 name: contact.name,
-                responsibleuserid: contact['responsible_user_id'],
-                leads: JSON.stringify(leadsId),
+                responsibleUserId: contact['responsible_user_id'],
                 phone: pre.phone,
                 email: pre.email
             }
@@ -87,14 +61,18 @@ export class ContactsService {
         return this.contactsRepository.insert(contact);
     }
 
-    async test() {
-        const leads = await getRepository(Leads)
-            .createQueryBuilder('leads')
-            .innerJoin("leads", "contacts")
-            .where("leads.externalId like '%contact.leads%'")
-            .getMany()
-            return leads;
+    async save(contact: Contacts) {
+        return this.contactsRepository.save(contact)
     }
 
-    
+    async update() {
+        let contacts = await this.getAllContacts();
+        contacts.forEach(async element => {
+            if (await this.contactsRepository.findOne({externalId: element.externalId})) {
+                this.updateContact(element, element);
+            } else {
+                this.createContact(element)
+            }
+        });
+    }
 }
